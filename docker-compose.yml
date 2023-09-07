@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+    php-apache:
+        container_name: php-apache
+        build:
+            context: ./php
+            dockerfile: Dockerfile
+        depends_on:
+            - db
+        volumes:
+            - ./php/src:/var/www/html/
+        ports:
+            - 8000:80
+    # Use root/example as user/password credentials
+    db:
+      image: mariadb
+      restart: always
+      environment:
+        MARIADB_ROOT_PASSWORD: example
+
+    adminer:
+      image: adminer
+      restart: always
+      ports:
+        - 8080:8080
+    server:
+     image: yandex/clickhouse-server
+     ports:
+     - "8123:8123"
+     - "9000:9000"
+     - "9009:9009"
+
+     ulimits:
+      nproc: 65535
+      nofile:
+       soft: 262144
+       hard: 262144
+    rabbitmq:
+      image: rabbitmq:3.10.7-management
+      hostname: rabbitmq
+      restart: always
+      environment:
+        - RABBITMQ_DEFAULT_USER=rmuser
+        - RABBITMQ_DEFAULT_PASS=rmpassword
+        - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
+      volumes:
+        - ./rabbitmq:/var/lib/rabbitmq
+      ports:
+        - 15672:15672
+        - 5672:5672
